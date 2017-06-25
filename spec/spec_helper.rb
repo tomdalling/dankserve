@@ -1,6 +1,8 @@
 $LOAD_PATH.unshift(File.expand_path('../lib', __dir__))
 require 'dankserve'
 
+begin; require 'byebug'; rescue LoadError; end
+
 RSpec.configure do |config|
   config.expect_with :rspec do |expectations|
     expectations.include_chain_clauses_in_custom_matcher_descriptions = true
