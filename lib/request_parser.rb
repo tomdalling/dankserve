@@ -1,4 +1,5 @@
 require 'values'
+require 'timeout'
 
 class RequestParser
   def self.parse(input_stream)
@@ -9,7 +10,7 @@ class RequestParser
     attr_reader :input_stream
 
     def initialize(input_stream)
-      @input_stream = input_stream
+      @input_stream = ReadTimeoutable.new(input_stream)
     end
 
     def parsed
@@ -35,8 +36,8 @@ class RequestParser
       headers = {}
 
       loop do
-        line = input_stream.gets.strip
-        break if line.empty?
+        line = input_stream.gets
+        break if line.nil? || line.strip.empty?
         key, _, value = line.partition(':').map(&:strip)
         headers[key] = value
       end
@@ -66,4 +67,32 @@ class RequestParser
     )
 
     class BadRequestError < StandardError; end
+    class ReadTimeoutError < StandardError; end
+
+    class ReadTimeoutable
+      attr_reader :stream, :duration
+
+      def initialize(stream, duration: 2.0)
+        @stream = stream
+        @duration = duration
+      end
+
+      def gets
+        timeout{ stream.gets }
+      end
+
+      def read(*args)
+        timeout{ stream.read(*args) }
+      end
+
+      def timeout
+        result = nil
+        Timeout.timeout(duration) do
+          result = yield
+        end
+        result
+      rescue Timeout::Error
+        raise ReadTimeoutError
+      end
+    end
 end

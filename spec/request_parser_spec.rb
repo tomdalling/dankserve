@@ -45,4 +45,24 @@ RSpec.describe RequestParser do
     response = subject.parse(request)
     expect(response.body).to eq("")
   end
+
+  it 'break on socket read timeout' do
+    expect {
+      subject.parse(BlockedStream.new)
+    }.to raise_error(RequestParser::ReadTimeoutError)
+  end
+
+  class BlockedStream
+    def gets
+      block
+    end
+
+    def read(*args)
+      block
+    end
+
+    def block
+      loop { sleep(0.1) }
+    end
+  end
 end

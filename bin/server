@@ -2,7 +2,12 @@
 
 $LOAD_PATH.unshift(File.expand_path('../lib', __dir__))
 require 'dankserve'
+require 'config_ru'
+
+config_ru_path = ARGV.first || '<not supplied>'
+abort("Invalid config.ru") unless File.exist?(config_ru_path)
+app = ConfigRu.new(config_ru_path).app
 
 puts "Running server on port 9292..."
-Dankserve.new(port: 9292).run!
+Dankserve.new(app: app, port: 9292).run!
 
